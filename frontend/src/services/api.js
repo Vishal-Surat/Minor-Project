@@ -45,41 +45,12 @@ api.interceptors.response.use(
     // Success case - return the data
     return response.data;
   },
-  async (error) => {
-    const originalRequest = error.config;
-    
-    // Handle network errors
-    if (!error.response) {
-      console.error('Network Error: Unable to connect to the API server', error);
-      return Promise.reject({
-        message: 'Network Error: Please check your internet connection or the server may be down',
-        isNetworkError: true,
-        originalError: error
-      });
-    }
-    
-    // Handle server errors
-    if (error.response.status >= 500) {
-      console.error('Server Error:', error.response.data);
-      return Promise.reject({
-        message: 'Server Error: The server encountered an error, please try again later',
-        originalError: error.response.data
-      });
-    }
-    
-    // Handle 401 Unauthorized
-    if (error.response.status === 401) {
-      console.error('Authentication Error:', error.response.data);
-      
-      // Clear local storage if we get an unauthorized error
+  error => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized error
       localStorage.removeItem('authUser');
+      window.location.href = '/login';
     }
-    
-    // Return the error response data if available
-    if (error.response.data) {
-      return Promise.reject(error.response.data);
-    }
-    
     return Promise.reject(error);
   }
 );

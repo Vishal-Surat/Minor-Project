@@ -10,7 +10,6 @@ const AdvancedAnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeRange, setTimeRange] = useState(7);
-  const [darkMode, setDarkMode] = useState(false);
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
 

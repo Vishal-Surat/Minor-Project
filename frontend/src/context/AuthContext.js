@@ -36,8 +36,6 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         // Log the error, but don't show to user - this is a background check
-        let errorMessage = 'Authentication check failed';
-        
         if (error.isNetworkError) {
           console.warn("Auth check failed: Network error - server might be down");
         } else if (error.response?.status === 401) {

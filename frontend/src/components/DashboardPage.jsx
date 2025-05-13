@@ -13,7 +13,6 @@ const DashboardPage = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
 
