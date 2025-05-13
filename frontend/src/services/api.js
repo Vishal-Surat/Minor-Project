@@ -1,21 +1,31 @@
 // src/services/api.js
 import axios from 'axios';
 
-// Base API URL - make sure it's accessible
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// Create axios instance
-const API = axios.create({
-  baseURL: BASE_URL,
+const api = axios.create({
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Enables sending cookies with requests (for JWT)
-  timeout: 15000, // 15 second timeout
 });
 
+// Add a request interceptor to include the auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Request interceptor 
-API.interceptors.request.use(
+api.interceptors.request.use(
   (config) => {
     // Make sure withCredentials is always set to true for all requests
     config.withCredentials = true;
@@ -29,7 +39,7 @@ API.interceptors.request.use(
 );
 
 // Response interceptor
-API.interceptors.response.use(
+api.interceptors.response.use(
   (response) => {
     // Success case - return the data
     return response.data;
@@ -76,7 +86,7 @@ API.interceptors.response.use(
 // ----------------- Auth APIs -------------------
 export const loginUser = async (credentials) => {
   try {
-    const response = await API.post('/auth/login', credentials);
+    const response = await api.post('/auth/login', credentials);
     return response;
   } catch (error) {
     console.error('Login API Error:', error);
@@ -86,7 +96,7 @@ export const loginUser = async (credentials) => {
 
 export const registerUser = async (userData) => {
   try {
-    const response = await API.post('/auth/register', userData);
+    const response = await api.post('/auth/register', userData);
     return response;
   } catch (error) {
     throw error;
@@ -95,7 +105,7 @@ export const registerUser = async (userData) => {
 
 export const logoutUser = async () => {
   try {
-    const response = await API.post('/auth/logout');
+    const response = await api.post('/auth/logout');
     return response;
   } catch (error) {
     throw error;
@@ -104,7 +114,7 @@ export const logoutUser = async () => {
 
 export const getCurrentUser = async () => {
   try {
-    const response = await API.get('/auth/profile');
+    const response = await api.get('/auth/profile');
     return response;
   } catch (error) {
     throw error;
@@ -112,14 +122,14 @@ export const getCurrentUser = async () => {
 };
 
 // ----------------- Logs / Alerts / etc. -------------------
-export const fetchLogs = () => API.get('/logs');
-export const fetchAlerts = () => API.get('/alerts');
-export const fetchSessions = () => API.get('/logs/sessions');
-export const fetchAuditLogs = () => API.get('/logs/audit');
-export const fetchNotifications = () => API.get('/alerts/notifications');
+export const fetchLogs = () => api.get('/logs');
+export const fetchAlerts = () => api.get('/alerts');
+export const fetchSessions = () => api.get('/logs/sessions');
+export const fetchAuditLogs = () => api.get('/logs/audit');
+export const fetchNotifications = () => api.get('/alerts/notifications');
 
 // ----------------- Dashboard API -------------------
-export const fetchDashboardData = () => API.get('/dashboard');
+export const fetchDashboardData = () => api.get('/dashboard');
 
 // ----------------- Advanced Analytics API -------------------
 /**
@@ -131,7 +141,7 @@ export const fetchAdvancedAnalytics = async (days = 7) => {
   try {
     // For now, we'll reuse the dashboard endpoint but in a real implementation
     // this would be a separate endpoint with more detailed analytics data
-    const response = await API.get(`/dashboard?days=${days}`);
+    const response = await api.get(`/dashboard?days=${days}`);
     return response;
   } catch (error) {
     console.error('Error fetching advanced analytics data:', error);
@@ -147,7 +157,7 @@ export const fetchAdvancedAnalytics = async (days = 7) => {
  */
 export const fetchThreatIntelData = async (days = 7) => {
   try {
-    const response = await API.get(`/threat-intel/dashboard?days=${days}`);
+    const response = await api.get(`/threat-intel/dashboard?days=${days}`);
     return response;
   } catch (error) {
     console.error('Error fetching threat intel data:', error);
@@ -162,7 +172,7 @@ export const fetchThreatIntelData = async (days = 7) => {
  */
 export const checkIPReputation = async (ip) => {
   try {
-    const response = await API.get(`/threat-intel/ip/${ip}`);
+    const response = await api.get(`/threat-intel/ip/${ip}`);
     return response;
   } catch (error) {
     console.error('Error checking IP reputation:', error);
@@ -177,7 +187,7 @@ export const checkIPReputation = async (ip) => {
  */
 export const checkDomainReputation = async (domain) => {
   try {
-    const response = await API.get(`/threat-intel/domain/${domain}`);
+    const response = await api.get(`/threat-intel/domain/${domain}`);
     return response;
   } catch (error) {
     console.error('Error checking domain reputation:', error);
@@ -192,7 +202,7 @@ export const checkDomainReputation = async (domain) => {
  */
 export const getRecentThreats = async (limit = 10) => {
   try {
-    const response = await API.get(`/threat-intel/recent?limit=${limit}`);
+    const response = await api.get(`/threat-intel/recent?limit=${limit}`);
     return response;
   } catch (error) {
     console.error('Error fetching recent threats:', error);
@@ -206,7 +216,7 @@ export const getRecentThreats = async (limit = 10) => {
  */
 export const getSuspiciousIPs = async () => {
   try {
-    const response = await API.get('/threat-intel/suspicious-ips');
+    const response = await api.get('/threat-intel/suspicious-ips');
     return response;
   } catch (error) {
     console.error('Error fetching suspicious IPs:', error);
@@ -220,7 +230,7 @@ export const getSuspiciousIPs = async () => {
  */
 export const getSuspiciousDomains = async () => {
   try {
-    const response = await API.get('/threat-intel/suspicious-domains');
+    const response = await api.get('/threat-intel/suspicious-domains');
     return response;
   } catch (error) {
     console.error('Error fetching suspicious domains:', error);
@@ -235,7 +245,7 @@ export const getSuspiciousDomains = async () => {
  */
 export const addSuspiciousIP = async (ipData) => {
   try {
-    const response = await API.post('/threat-intel/suspicious-ips', ipData);
+    const response = await api.post('/threat-intel/suspicious-ips', ipData);
     return response;
   } catch (error) {
     console.error('Error adding suspicious IP:', error);
@@ -250,10 +260,12 @@ export const addSuspiciousIP = async (ipData) => {
  */
 export const addSuspiciousDomain = async (domainData) => {
   try {
-    const response = await API.post('/threat-intel/suspicious-domains', domainData);
+    const response = await api.post('/threat-intel/suspicious-domains', domainData);
     return response;
   } catch (error) {
     console.error('Error adding suspicious domain:', error);
     throw error;
   }
 };
+
+export default api;
