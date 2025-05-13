@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: security-monitor-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OTX_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false 
