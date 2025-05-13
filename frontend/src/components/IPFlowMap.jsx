@@ -48,7 +48,7 @@ const IPFlowMap = ({ ipData }) => {
     return () => {
       mapInstance.remove();
     };
-  }, [mapLoaded]);
+  }, [map, mapLoaded]);
 
   // Update markers when IP data changes
   useEffect(() => {
