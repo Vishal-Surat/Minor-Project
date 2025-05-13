@@ -14,7 +14,7 @@ const API = axios.create({
   timeout: 15000, // 15 second timeout
 });
 
-// Request interceptor
+// Request interceptor 
 API.interceptors.request.use(
   (config) => {
     // Make sure withCredentials is always set to true for all requests

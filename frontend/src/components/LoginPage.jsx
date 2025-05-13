@@ -105,12 +105,6 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-
-  // Function to fill with demo credentials
-  const fillDemoCredentials = () => {
-    setEmail('admin@example.com');
-    setPassword('admin123');
-  };
   
   // Format seconds to MM:SS
   const formatTime = (seconds) => {
@@ -194,22 +188,6 @@ const LoginPage = () => {
             </button>
           </div>
           
-          <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600 mb-2">
-              Demo credentials:
-            </p>
-            <button 
-              type="button"
-              onClick={fillDemoCredentials}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              disabled={isAccountLocked && lockoutTimer > 0}
-            >
-              Click to fill demo credentials
-            </button>
-            <p className="text-xs text-gray-500 mt-2">
-              (Email: admin@example.com, Password: admin123)
-            </p>
-          </div>
         </form>
       </div>
     </div>
