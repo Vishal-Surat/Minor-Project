@@ -1,13 +1,9 @@
-// src/components/DashboardPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import GraphSection from './GraphSection';
-import LiveThreatFeed from './LiveThreatFeed';
-import IPFlowMap from './IPFlowMap';
-import NotificationBanner from './NotificationBanner';
 import { useAuth } from '../context/AuthContext';
 import { fetchDashboardData } from '../services/api';
+import IPFlowMap from './IPFlowMap';
 
 const DashboardPage = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -128,74 +124,87 @@ const DashboardPage = () => {
           </div>
         </div>
       </header>
-
-      <NotificationBanner />
       
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <h2 className="text-lg font-medium text-gray-900">System Overview</h2>
-          <p className="text-sm text-gray-500">Real-time security metrics and threat analysis</p>
+          <h2 className="text-lg font-medium text-gray-900">Security Overview</h2>
+          <p className="text-sm text-gray-500">Real-time security monitoring and threat detection</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardData && (
-            <>
-              <GraphSection data={dashboardData.graphData} />
-              <LiveThreatFeed threats={dashboardData.liveThreats} />
-              <IPFlowMap ipData={dashboardData.ipFlows} />
-              
-              {/* Add a new section for recent activity */}
-              <div className="bg-white rounded-lg shadow overflow-hidden col-span-full mt-6">
-                <div className="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
-                </div>
-                <div className="p-4">
-                  {dashboardData.recentActivity && dashboardData.recentActivity.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {dashboardData.recentActivity.map((activity) => (
-                            <tr key={activity.id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{activity.message}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{activity.sourceIP}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{activity.destinationIP}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                  ${activity.severity === 'critical' ? 'bg-red-100 text-red-800' : 
-                                    activity.severity === 'high' ? 'bg-orange-100 text-orange-800' : 
-                                    activity.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
-                                    'bg-green-100 text-green-800'}`}>
-                                  {activity.severity}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {new Date(activity.timestamp).toLocaleString()}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Total Alerts</h3>
+            <p className="text-3xl font-bold text-blue-600">{dashboardData?.totalAlerts || 0}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Critical Threats</h3>
+            <p className="text-3xl font-bold text-red-600">{dashboardData?.criticalThreats || 0}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Blocked IPs</h3>
+            <p className="text-3xl font-bold text-green-600">{dashboardData?.blockedIPs || 0}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">System Health</h3>
+            <p className="text-3xl font-bold text-purple-600">{dashboardData?.systemHealth || 'Good'}</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">IP Flow Map</h3>
+            <div className="h-96">
+              <IPFlowMap ipData={dashboardData?.ipFlowData || []} />
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Alerts</h3>
+            <div className="space-y-4">
+              {dashboardData?.recentAlerts?.map((alert, index) => (
+                <div key={index} className="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-gray-900">{alert.title}</p>
+                      <p className="text-sm text-gray-500">{alert.description}</p>
                     </div>
-                  ) : (
-                    <p className="text-gray-500">No recent activity found.</p>
-                  )}
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      alert.severity === 'high' ? 'bg-red-100 text-red-800' :
+                      alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {alert.severity}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">{alert.timestamp}</p>
                 </div>
-              </div>
-            </>
-          )}
+              ))}
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">System Status</h3>
+            <div className="space-y-4">
+              {dashboardData?.systemStatus?.map((status, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <span className="text-gray-700">{status.name}</span>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    status.status === 'operational' ? 'bg-green-100 text-green-800' :
+                    status.status === 'degraded' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {status.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </main>
     </div>
   );
 };
 
-export default DashboardPage;
+export default DashboardPage; 

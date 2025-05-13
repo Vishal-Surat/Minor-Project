@@ -1,93 +1,84 @@
-// src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentUser, logoutUser } from '../services/api';
-import { toast } from 'react-toastify';
+import { loginUser, logoutUser, checkAuth } from '../services/api';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(() => {
-    const stored = localStorage.getItem('authUser');
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [auth, setAuth] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
 
-  // Check if user is authenticated on page load/refresh
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      // Skip if we've already checked
-      if (initialized) return;
-      
+    const checkAuthentication = async () => {
       try {
-        setLoading(true);
-        
-        // Try to get user profile using the httpOnly cookie
-        const response = await getCurrentUser();
-        
+        const response = await checkAuth();
         if (response.success) {
-          // We're authenticated - token is in cookie, just save user data
           setAuth(response.data);
-          localStorage.setItem('authUser', JSON.stringify(response.data));
         } else {
-          // Not authenticated
           setAuth(null);
-          localStorage.removeItem('authUser');
         }
       } catch (error) {
-        // Log the error, but don't show to user - this is a background check
-        if (error.isNetworkError) {
-          console.warn("Auth check failed: Network error - server might be down");
-        } else if (error.response?.status === 401) {
-          console.log("Auth check: No valid session");
-        } else {
-          console.error("Auth check error:", error.message);
-        }
-        
-        // Clear auth state on error
+        console.error('Authentication check failed:', error);
         setAuth(null);
-        localStorage.removeItem('authUser');
       } finally {
         setLoading(false);
-        setInitialized(true);
       }
     };
 
-    checkAuthStatus();
-  }, [initialized]);
+    checkAuthentication();
+  }, []);
 
-  const login = (userData) => {
-    // We only store user data, not the token (which is in httpOnly cookie)
-    setAuth(userData);
-    localStorage.setItem('authUser', JSON.stringify(userData));
-    setInitialized(true);
+  const login = async (credentials) => {
+    try {
+      const response = await loginUser(credentials);
+      if (response.success) {
+        setAuth(response.data);
+        return { success: true };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Login failed'
+      };
+    }
   };
 
   const logout = async () => {
     try {
-      // Call backend to clear the cookie
       await logoutUser();
-      toast.success('Logged out successfully');
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Error during logout, but session has been cleared');
-    } finally {
-      // Clear local state
       setAuth(null);
-      localStorage.removeItem('authUser');
+      return { success: true };
+    } catch (error) {
+      console.error('Logout failed:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Logout failed'
+      };
     }
   };
 
-  // Force check auth status (useful after a certain time period)
-  const checkAuth = async () => {
-    setInitialized(false); // This will trigger the useEffect to run again
+  const value = {
+    auth,
+    loading,
+    login,
+    logout
   };
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout, loading, checkAuth }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export default AuthContext; 

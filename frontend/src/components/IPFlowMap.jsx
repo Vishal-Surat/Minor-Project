@@ -1,148 +1,98 @@
-// src/components/IPFlowMap.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Mock IP to location mapping for demo purposes
-// In a real app, you'd use GeoIP service or similar
-const mockIpLocations = {
-  getLocation: (ip) => {
-    // Generate deterministic random coordinates based on IP
-    const ipSum = ip.split('.').reduce((sum, num) => sum + parseInt(num, 10), 0);
-    const lat = (ipSum % 180) - 90;
-    const lng = (ipSum % 360) - 180;
-    
-    return {
-      lat,
-      lng,
-      location: `${lat.toFixed(2)}, ${lng.toFixed(2)}`
-    };
-  }
+// Fix for default marker icons in Leaflet with Next.js
+const fixLeafletIcon = () => {
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  });
 };
 
-const IPFlowMap = ({ ipData = [] }) => {
-  const [mapLoaded, setMapLoaded] = useState(false);
+// Mock function to get IP location (replace with actual API call)
+const getIPLocation = (ip) => {
+  // This is a mock function - replace with actual IP geolocation API
+  const mockLocations = {
+    '192.168.1.1': { lat: 40.7128, lng: -74.0060 }, // New York
+    '10.0.0.1': { lat: 34.0522, lng: -118.2437 },   // Los Angeles
+    '172.16.0.1': { lat: 51.5074, lng: -0.1278 },   // London
+    '8.8.8.8': { lat: 37.7749, lng: -122.4194 },    // San Francisco
+  };
+  return mockLocations[ip] || { lat: 0, lng: 0 };
+};
+
+const IPFlowMap = ({ ipData }) => {
+  const mapRef = useRef(null);
   const [map, setMap] = useState(null);
-  const [markers, setMarkers] = useState([]);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [leafletInstance, setLeafletInstance] = useState(null);
+  const [markers, setMarkers] = useState([]);
 
-  // Initialize map on component mount
+  // Initialize map
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Import leaflet dynamically to avoid SSR issues
-      const loadLeaflet = async () => {
-        try {
-          const L = await import('leaflet');
-          setLeafletInstance(L.default || L);
-          
-          if (!mapLoaded && !map) {
-            // Create map if it doesn't exist
-            const mapInstance = L.default.map('ipmap', {
-              center: [20, 0],
-              zoom: 2,
-              minZoom: 2
-            });
-            
-            // Add tile layer
-            L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(mapInstance);
-            
-            setMap(mapInstance);
-            setMapLoaded(true);
-          }
-        } catch (error) {
-          console.error('Error loading Leaflet:', error);
-        }
-      };
-      
-      loadLeaflet();
-    }
-    
-    // Cleanup on unmount
+    if (!mapRef.current || mapLoaded) return;
+
+    fixLeafletIcon();
+    const mapInstance = L.map(mapRef.current).setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(mapInstance);
+
+    setMap(mapInstance);
+    setLeafletInstance(L);
+    setMapLoaded(true);
+
     return () => {
-      if (map) {
-        map.remove();
-      }
+      mapInstance.remove();
     };
-  }, [map, mapLoaded]);
+  }, [mapLoaded]);
 
-  // Update markers when ipData changes
+  // Update markers when IP data changes
   useEffect(() => {
-    // Only proceed if we have the map and Leaflet instance
-    if (map && leafletInstance && ipData && ipData.length > 0) {
-      // Clear existing markers
-      markers.forEach(marker => marker.remove());
-      const newMarkers = [];
-      
-      // Add source and destination markers
-      ipData.forEach(flow => {
-        try {
-          // Get source location
-          const sourceLocation = mockIpLocations.getLocation(flow.source);
-          
-          // Get destination location
-          const destinationLocation = mockIpLocations.getLocation(flow.destination);
-          
-          // Create source marker
-          const sourceMarker = leafletInstance.marker([sourceLocation.lat, sourceLocation.lng])
-            .addTo(map)
-            .bindPopup(`
-              <strong>Source IP:</strong> ${flow.source}<br>
-              <strong>Location:</strong> ${sourceLocation.location}<br>
-              <strong>Severity:</strong> ${flow.severity || 'unknown'}
-            `);
-          
-          // Create destination marker
-          const destMarker = leafletInstance.marker([destinationLocation.lat, destinationLocation.lng])
-            .addTo(map)
-            .bindPopup(`
-              <strong>Destination IP:</strong> ${flow.destination}<br>
-              <strong>Location:</strong> ${destinationLocation.location}<br>
-              <strong>Severity:</strong> ${flow.severity || 'unknown'}
-            `);
-          
-          // Draw line between source and destination
-          const line = leafletInstance.polyline(
-            [[sourceLocation.lat, sourceLocation.lng], [destinationLocation.lat, destinationLocation.lng]],
-            {
-              color: flow.severity === 'critical' ? 'red' : 
-                     flow.severity === 'high' ? 'orange' : 
-                     flow.severity === 'medium' ? 'yellow' : 'blue',
-              weight: 2,
-              opacity: 0.7,
-              dashArray: '5, 5'
-            }
-          ).addTo(map);
-          
-          newMarkers.push(sourceMarker, destMarker, line);
-        } catch (error) {
-          console.error('Error adding IP flow to map:', error);
+    if (!map || !leafletInstance || !ipData) return;
+
+    // Clear existing markers
+    markers.forEach(marker => marker.remove());
+    const newMarkers = [];
+
+    // Add new markers
+    ipData.forEach(flow => {
+      const sourceLocation = getIPLocation(flow.sourceIP);
+      const destLocation = getIPLocation(flow.destIP);
+
+      // Create source marker
+      const sourceMarker = leafletInstance.marker([sourceLocation.lat, sourceLocation.lng])
+        .bindPopup(`Source IP: ${flow.sourceIP}`)
+        .addTo(map);
+      newMarkers.push(sourceMarker);
+
+      // Create destination marker
+      const destMarker = leafletInstance.marker([destLocation.lat, destLocation.lng])
+        .bindPopup(`Destination IP: ${flow.destIP}`)
+        .addTo(map);
+      newMarkers.push(destMarker);
+
+      // Create flow line
+      const flowLine = leafletInstance.polyline(
+        [[sourceLocation.lat, sourceLocation.lng], [destLocation.lat, destLocation.lng]],
+        {
+          color: flow.threatLevel === 'high' ? 'red' : flow.threatLevel === 'medium' ? 'orange' : 'green',
+          weight: 2,
+          opacity: 0.7
         }
-      });
-      
-      setMarkers(newMarkers);
-    }
+      ).addTo(map);
+      newMarkers.push(flowLine);
+    });
+
+    setMarkers(newMarkers);
   }, [map, leafletInstance, ipData, markers]);
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">IP Flow Map</h3>
-        <p className="text-sm text-gray-500">Network traffic visualization</p>
-      </div>
-      <div className="p-4">
-        <div id="ipmap" style={{ height: '300px', width: '100%', borderRadius: '4px' }}></div>
-        {(!ipData || ipData.length === 0) && (
-          <div className="text-center py-4 text-gray-500">
-            No IP flow data available
-          </div>
-        )}
-        <div className="mt-2 text-xs text-gray-500">
-          Showing {ipData?.length || 0} network connections
-        </div>
-      </div>
-    </div>
+    <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
   );
 };
 
-export default IPFlowMap;
+export default IPFlowMap; 
