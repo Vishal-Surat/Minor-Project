@@ -2,6 +2,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js'; // Correct import
 import Log from '../models/Log.js';
+import mongoose from 'mongoose'; // Add this at the top
 
 // Create a new log
 export const createLog = asyncHandler(async (req, res) => {
@@ -49,13 +50,16 @@ export const getAllLogs = asyncHandler(async (req, res) => {
 // Get log by ID
 export const getLogById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json(sendError(res, 'Invalid log ID'));
+  }
   const log = await Log.findById(id);
 
   if (!log) {
-    return res.status(404).json(sendError(res, 'Log not found')); // Use sendError
+    return res.status(404).json(sendError(res, 'Log not found'));
   }
 
-  return res.status(200).json(sendSuccess(res, log, 'Log retrieved')); // Use sendSuccess
+  return res.status(200).json(sendSuccess(res, log, 'Log retrieved'));
 });
 
 // Update log status

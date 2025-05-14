@@ -13,7 +13,6 @@ const DashboardPage = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -143,7 +142,13 @@ const DashboardPage = () => {
             <>
               <GraphSection data={dashboardData.graphData} />
               <LiveThreatFeed threats={dashboardData.liveThreats} />
-              <IPFlowMap ipData={dashboardData.ipFlows} />
+              <IPFlowMap
+                ipData={Array.from({ length: 50 }, (_, i) => ({
+                  source: `192.168.1.${(i % 20) + 1}`,
+                  destination: `10.0.0.${(i % 20) + 1}`,
+                  severity: ['low', 'medium', 'high', 'critical'][i % 4]
+                }))}
+              />
               
               {/* Add a new section for recent activity */}
               <div className="bg-white rounded-lg shadow overflow-hidden col-span-full mt-6">

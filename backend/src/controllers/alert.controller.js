@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
 import Alert from '../models/Alert.js';
+import mongoose from 'mongoose';
 
 // Create a new alert
 export const createAlert = asyncHandler(async (req, res) => {
@@ -30,6 +31,9 @@ export const getAllAlerts = asyncHandler(async (req, res) => {
 // Get alert by ID
 export const getAlertById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json(sendError(res, 'Invalid alert ID'));
+  }
   const alert = await Alert.findById(id);
 
   if (!alert) {

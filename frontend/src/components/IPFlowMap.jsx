@@ -25,6 +25,15 @@ const IPFlowMap = ({ ipData = [] }) => {
   const [markers, setMarkers] = useState([]);
   const [leafletInstance, setLeafletInstance] = useState(null);
 
+  // Generate 50 demo flows if ipData is empty
+  const demoFlows = Array.from({ length: 50 }, (_, i) => ({
+    source: `192.168.1.${(i % 20) + 1}`,
+    destination: `10.0.0.${(i % 20) + 1}`,
+    severity: ['low', 'medium', 'high', 'critical'][i % 4]
+  }));
+
+  const flows = (ipData && ipData.length > 0) ? ipData : demoFlows;
+
   // Initialize map on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -69,13 +78,13 @@ const IPFlowMap = ({ ipData = [] }) => {
   // Update markers when ipData changes
   useEffect(() => {
     // Only proceed if we have the map and Leaflet instance
-    if (map && leafletInstance && ipData && ipData.length > 0) {
+    if (map && leafletInstance && flows && flows.length > 0) {
       // Clear existing markers
       markers.forEach(marker => marker.remove());
       const newMarkers = [];
       
       // Add source and destination markers
-      ipData.forEach(flow => {
+      flows.forEach(flow => {
         try {
           // Get source location
           const sourceLocation = mockIpLocations.getLocation(flow.source);
@@ -122,7 +131,7 @@ const IPFlowMap = ({ ipData = [] }) => {
       
       setMarkers(newMarkers);
     }
-  }, [map, leafletInstance, ipData]);
+  }, [map, leafletInstance, flows]);
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -132,13 +141,13 @@ const IPFlowMap = ({ ipData = [] }) => {
       </div>
       <div className="p-4">
         <div id="ipmap" style={{ height: '300px', width: '100%', borderRadius: '4px' }}></div>
-        {(!ipData || ipData.length === 0) && (
+        {(!flows || flows.length === 0) && (
           <div className="text-center py-4 text-gray-500">
             No IP flow data available
           </div>
         )}
         <div className="mt-2 text-xs text-gray-500">
-          Showing {ipData?.length || 0} network connections
+          Showing {flows?.length || 0} network connections
         </div>
       </div>
     </div>
