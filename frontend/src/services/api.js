@@ -35,7 +35,7 @@ API.interceptors.response.use(
     return response.data;
   },
   async (error) => {
-    const originalRequest = error.config;
+    // const originalRequest = error.config;
     
     // Handle network errors
     if (!error.response) {

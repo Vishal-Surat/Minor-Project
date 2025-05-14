@@ -73,7 +73,7 @@ const IPFlowMap = ({ ipData = [] }) => {
         map.remove();
       }
     };
-  }, []);
+  });
 
   // Update markers when ipData changes
   useEffect(() => {
@@ -131,7 +131,7 @@ const IPFlowMap = ({ ipData = [] }) => {
       
       setMarkers(newMarkers);
     }
-  }, [map, leafletInstance, flows]);
+  }, [markers ,map, leafletInstance, flows]);
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">

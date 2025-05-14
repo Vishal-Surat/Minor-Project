@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
         } else if (error.response?.status === 401) {
           console.log("Auth check: No valid session");
         } else {
-          console.error("Auth check error:", error.message);
+          console.error("Auth check error:", errorMessage);
         }
         
         // Clear auth state on error
