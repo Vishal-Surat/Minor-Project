@@ -4,11 +4,8 @@
   "description": "Network Security Dashboard with Real-time Monitoring",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "start:backend": "cd backend && npm run dev",
-    "start:frontend": "cd frontend && npm start",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "seed": "cd backend && node src/config/seed.js"
+    "start": "npm run start --prefix backend ",
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend"
   },
   "keywords": [
     "security",
@@ -22,4 +19,4 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
-} 
+}
