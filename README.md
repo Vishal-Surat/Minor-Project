@@ -23,11 +23,11 @@ Create a `.env` file in the root directory with the following variables:
 
 ```
 PORT=5000
-MONGODB_URI=mongodb+srv://minor:I8VsYMIfegPVghFV@cluster0.pvgh62j.mongodb.net/minor_project?retryWrites=true&w=majority
-OTX_API_KEY=c0add590346591497cc498bea89edb031beaba56ee3216e97669fc172a220df8
-JWT_SECRET=yourSuperSecretKeyHere
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
+MONGODB_URI=
+OTX_API_KEY=
+JWT_SECRET=
+NODE_ENV=
+FRONTEND_URL=
 ```
 
 ## Starting the Application
